@@ -44,89 +44,22 @@ void print_bytes(char* bin, int section)
     }
 }
 
-Elf64_Ehdr *parse_ehdr(char* bin)
+void read_elf64_header(FILE *fp, Elf64_Ehdr *elf_header)
 {
-    Elf64_Ehdr *temp = malloc(sizeof(Elf64_Ehdr));
-    /* e_ident struct*/
+    lseek(fp, 0, SEEK_SET);
+    read(fp, elf_header, sizeof(Elf64_Ehdr));
+}
 
-    /* magic num 0 */
-    temp->e_ident[0] = bin[0];
-    /* valid: 0x7f */
-    if (temp->e_ident[0] != 0x7f)
-    {
-        DEBUG_PRINT(("[-] magic num 0 bad\n"));
-        exit(-1);
-    }
-
-    /* magic num 1 */
-    temp->e_ident[1] = bin[1];
-    /* valid: 'E' */
-    if (temp->e_ident[1] != 0x45)
-    {
-        DEBUG_PRINT(("[-] magic num 1 bad: 0x%02x\n", temp->e_ident[1]));
-        exit(-1);
-    }
-
-    /* magic num 2 */
-    temp->e_ident[2] = bin[2];
-    /* valid: 'L' */
-    if (temp->e_ident[0] != 0x4C)
-    {
-        DEBUG_PRINT(("[-] magic num 1 bad\n"));
-        exit(-1);
-    }
-
-    /* magic num 3 */
-    temp->e_ident[3] = bin[3];
-    /* valid: 'F' */
-    if (temp->e_ident[0] != 0x46)
-    {
-        DEBUG_PRINT(("[-] magic num 1 bad\n"));
-        exit(-1);
-    }
-
-    /* class */
-    temp->e_ident[4] = bin[4];
-    /* valid: 0 ELFCLASSNONE
-              1 ELFCLASS32
-              2 ELFCLASS64
-              3 ELFCLASSNUM */
-    if (temp->e_ident[4] < 0 || temp->e_ident[4] > 3) exit(-1);
-    DEBUG_PRINT(("[+] class %d\n", temp->e_ident[4]));
-
-    /* data */
-    temp->e_ident[5] = bin[5];
-    /* valid: 0 ELFDATANONE
-              1 ELFDATA2LSB
-              2 ELFDATA2MSB
-              3 ELFDATANUM */
-    if (temp->e_ident[5] < 0 || temp->e_ident[5] > 3) exit(-1);
-
-    /* version */
-    temp->e_ident[6] = bin[6];
-
-    /* OS ABI */
-    temp->e_ident[7] = bin[7];
-
-    /* ABI version */
-    temp->e_ident[8] = bin[8];
-
-    /* padding */
-    int i = 9;
-    while (i < 16)
-    {
-        temp->e_ident[i] = 0;
-        i++;
-    }
-
-    return temp;
+void print_elf64_header(Elf64_Ehdr *elf_header)
+{
+    printf("ELF 64\n"); 
 }
 
 int main(int argc, char *argv[])
 {
     /* ptr to actual bytes of exectable and headers*/
     char* bin;
-    Elf64_Ehdr *ehdr;
+    Elf64_Ehdr *elf_header;
 
     /* fopen vars */
     const char* mode = "r";
@@ -140,7 +73,8 @@ int main(int argc, char *argv[])
 
     /* parse ELF64 Header */
     bin = read_bin(fp, bin);
-    ehdr = parse_ehdr(bin);
+    read_elf64_header(fp, elf_header);
+    print_elf64_header(elf_header);
 
     return 0;
 }
