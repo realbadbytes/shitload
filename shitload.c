@@ -6,6 +6,13 @@
 
 #define E_HDR 1
 
+/* switch on/off */
+#define DEBUG
+/* optional print debug */
+#ifdef DEBUG
+#define DEBUG_PRINT(fmt, args...)    printf(fmt, ## args)
+#endif
+
 char* read_bin(FILE *fp, char* bin)
 {
     long fp_len = 0;
@@ -45,22 +52,38 @@ Elf64_Ehdr *parse_ehdr(char* bin)
     /* magic num 0 */
     temp->e_ident[0] = bin[0];
     /* valid: 0x7f */
-    if (temp->e_ident[0] != 0x7f) exit(-1);
+    if (temp->e_ident[0] != 0x7f)
+    {
+        DEBUG_PRINT(("[-] magic num 0 bad\n"));
+        exit(-1);
+    }
 
     /* magic num 1 */
     temp->e_ident[1] = bin[1];
     /* valid: 'E' */
-    if (temp->e_ident[0] != 'E') exit(-1);
+    if (temp->e_ident[1] != 0x45)
+    {
+        DEBUG_PRINT(("[-] magic num 1 bad: 0x%02x\n", temp->e_ident[1]));
+        exit(-1);
+    }
 
     /* magic num 2 */
     temp->e_ident[2] = bin[2];
     /* valid: 'L' */
-    if (temp->e_ident[0] != 'L') exit(-1);
+    if (temp->e_ident[0] != 0x4C)
+    {
+        DEBUG_PRINT(("[-] magic num 1 bad\n"));
+        exit(-1);
+    }
 
-    /* magic num 0 */
+    /* magic num 3 */
     temp->e_ident[3] = bin[3];
     /* valid: 'F' */
-    if (temp->e_ident[0] != 'F') exit(-1);
+    if (temp->e_ident[0] != 0x46)
+    {
+        DEBUG_PRINT(("[-] magic num 1 bad\n"));
+        exit(-1);
+    }
 
     /* class */
     temp->e_ident[4] = bin[4];
@@ -68,10 +91,16 @@ Elf64_Ehdr *parse_ehdr(char* bin)
               1 ELFCLASS32
               2 ELFCLASS64
               3 ELFCLASSNUM */
-    if (0 < tmp->e_ident[4] > 3) exit(-1);
+    if (temp->e_ident[4] < 0 || temp->e_ident[4] > 3) exit(-1);
+    DEBUG_PRINT(("[+] class %d\n", temp->e_ident[4]));
 
     /* data */
     temp->e_ident[5] = bin[5];
+    /* valid: 0 ELFDATANONE
+              1 ELFDATA2LSB
+              2 ELFDATA2MSB
+              3 ELFDATANUM */
+    if (temp->e_ident[5] < 0 || temp->e_ident[5] > 3) exit(-1);
 
     /* version */
     temp->e_ident[6] = bin[6];
@@ -111,7 +140,6 @@ int main(int argc, char *argv[])
 
     /* parse ELF64 Header */
     bin = read_bin(fp, bin);
-    print_bytes(bin, E_HDR);
     ehdr = parse_ehdr(bin);
 
     return 0;
